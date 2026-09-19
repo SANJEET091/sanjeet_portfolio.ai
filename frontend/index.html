@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Resume AI</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <button class="new-chat-btn" id="newChatBtn">
+          <span class="plus">+</span> New chat
+        </button>
+      </div>
+      <nav class="chat-list" id="chatList"></nav>
+      <div class="sidebar-footer">Resume AI</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Toggle sidebar">☰</button>
+        <span class="topbar-title" id="topbarTitle">New chat</span>
+      </header>
+
+      <section class="messages" id="messages">
+        <div class="messages-inner" id="messagesInner"></div>
+      </section>
+
+      <footer class="composer">
+        <form class="composer-form" id="composerForm">
+          <textarea id="input" rows="1" placeholder="Message Resume AI…" autocomplete="off"></textarea>
+          <button type="submit" id="sendBtn" aria-label="Send">➤</button>
+        </form>
+        <p class="disclaimer">Answers come only from the parsed resume.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
