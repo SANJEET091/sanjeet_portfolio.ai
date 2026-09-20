@@ -127,11 +127,18 @@ function renderMessages() {
   scrollToBottom();
 }
 
-function appendTyping() {
+function appendTyping(isFirstMessage) {
   const el = document.createElement("div");
   el.className = "msg assistant";
   el.id = "typingIndicator";
-  el.innerHTML = `<div class="content dots"><span></span><span></span><span></span></div>`;
+  const label = isFirstMessage
+    ? '<span class="typing-label">Waking up the server, this may take 60s…</span> '
+    : '';
+  el.innerHTML =
+    '<div class="content">' +
+    label +
+    '<span class="dots"><span></span><span></span><span></span></span>' +
+    '</div>';
   $("messagesInner").appendChild(el);
   scrollToBottom();
 }
@@ -202,28 +209,75 @@ async function sendMessage(text) {
   saveState();
   renderChatList();
   renderMessages();
-  appendTyping();
+
+  // Create the assistant bubble immediately — empty for now
+  const container = $("messagesInner");
+  const assistantEl = document.createElement("div");
+  assistantEl.className = "msg assistant";
+  const contentEl = document.createElement("div");
+  contentEl.className = "content";
+  contentEl.innerHTML = '<span class="status-line">Waking up the server…</span>';
+  assistantEl.appendChild(contentEl);
+  container.appendChild(assistantEl);
+  scrollToBottom();
+
+  // Cycle through status messages during the wait
+  const statusMessages = [
+    "Waking up the server…",
+    "Reading your resume…",
+    "Analyzing the question…",
+    "Formulating an answer…",
+  ];
+  let statusIdx = 0;
+  const statusTimer = setInterval(() => {
+    if (contentEl.querySelector(".status-line")) {
+      statusIdx = Math.min(statusIdx + 1, statusMessages.length - 1);
+      contentEl.querySelector(".status-line").textContent = statusMessages[statusIdx];
+    }
+  }, 4000);
+
+  let answer = "";
 
   try {
-    const res = await fetch(API_URL, {
+    const res = await fetch("/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: text }),
     });
-    if (!res.ok) throw new Error(`Server error ${res.status}`);
-    const data = await res.json();
-    chat.messages.push({ role: "assistant", content: data.answer || "(no answer)" });
+    if (!res.ok) throw new Error("Server error " + res.status);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let firstChunk = true;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      if (firstChunk) {
+        clearInterval(statusTimer);
+        contentEl.innerHTML = "";
+        firstChunk = false;
+      }
+      answer += decoder.decode(value, { stream: true });
+      contentEl.innerHTML = renderMarkdown(answer);
+      scrollToBottom();
+    }
+
+    if (!answer) answer = "(no answer)";
+    chat.messages.push({ role: "assistant", content: answer });
+
   } catch (err) {
-    chat.messages.push({
-      role: "assistant",
-      content: `**Error:** ${err.message}. Please try again.`,
-    });
+    clearInterval(statusTimer);
+    answer = "**Error:** " + err.message + ". Please try again.";
+    contentEl.innerHTML = renderMarkdown(answer);
+    chat.messages.push({ role: "assistant", content: answer });
   } finally {
-    removeTyping();
+    clearInterval(statusTimer);
     state.sending = false;
     $("sendBtn").disabled = false;
     saveState();
-    renderMessages();
+    renderChatList();
   }
 }
 
