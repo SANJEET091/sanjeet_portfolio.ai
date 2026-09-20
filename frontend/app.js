@@ -75,10 +75,10 @@ function renderChatList() {
 function buildWelcome() {
   const wrap = document.createElement("div");
   wrap.className = "welcome";
-  wrap.innerHTML = `
-    <h1>Ask me anything about the candidate</h1>
-    <p>I answer only from the resume — no guessing.</p>
-    <div class="suggestions"></div>`;
+wrap.innerHTML =
+    '<h1>Hi, I\'m Sanjeet 👋</h1>' +
+    '<p>Ask me anything about my experience, skills, or projects — I\'ll answer from my resume.</p>' +
+    '<div class="suggestions"></div>';
   const prompts = [
     "What are your top skills?",
     "Summarize your work experience.",
